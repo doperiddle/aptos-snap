@@ -7,15 +7,21 @@ module.exports.onRpcRequest = async ({ origin, request }) => {
   if (
     !origin ||
     (
-      !origin.match(/^https:\/\/(?:\S+\.)?risewallet\.io$/) &&
-      !origin.match(/^https:\/\/(?:\S+\.)?risewallet\.dev$/)
+      !origin.match(/^https:\/\/(?:[a-zA-Z0-9-]+\.)?risewallet\.io$/) &&
+      !origin.match(/^https:\/\/(?:[a-zA-Z0-9-]+\.)?risewallet\.dev$/)
     )
   ) {
     throw new Error('Invalid origin');
   }
 
-  const dappOrigin = request?.params?.origin || origin;
-  const dappHost = (new URL(dappOrigin))?.host;
+  let dappHost;
+  try {
+    const dappOriginParam = request?.params?.origin;
+    const dappOrigin = (typeof dappOriginParam === 'string' && dappOriginParam) ? dappOriginParam : origin;
+    dappHost = new URL(dappOrigin).host;
+  } catch {
+    throw new Error('Invalid origin parameter.');
+  }
 
   switch (request.method) {
     case 'getPublicKey': {
@@ -60,6 +66,13 @@ module.exports.onRpcRequest = async ({ origin, request }) => {
       assertIsArray(messages);
       assertInput(messages.length);
       assertAllStrings(messages);
+
+      if (messages.length > 100) {
+        throw {
+          code: -32000,
+          message: 'Batch signing limited to maximum of 100 messages.'
+        };
+      }
 
       const keyPair = await deriveKeyPair(derivationPath);
 

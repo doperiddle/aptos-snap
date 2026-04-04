@@ -23,6 +23,12 @@ function isValidSegment(segment) {
 export async function deriveKeyPair(path) {
   assertIsArray(path);
   assertInput(path.length);
+  if (path.length > 10) {
+    throw {
+      code: -32000,
+      message: 'Derivation path exceeds maximum length of 10 segments.'
+    };
+  }
   assertInput(path.every((segment) => isValidSegment(segment)));
 
   const rootNode = await snap.request({
