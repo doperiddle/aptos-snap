@@ -3,7 +3,25 @@ export function bytesToHex(bytes) {
 }
 
 export function hexToBytes(hex) {
+  if (typeof hex !== 'string') {
+    throw {
+      code: -32000,
+      message: 'Input must be a string.'
+    };
+  }
   const strippedHex = hex.startsWith('0x') ? hex.slice(2) : hex;
+  if (strippedHex.length % 2 !== 0) {
+    throw {
+      code: -32000,
+      message: 'Hex string must have even length.'
+    };
+  }
+  if (!/^[0-9a-fA-F]*$/.test(strippedHex)) {
+    throw {
+      code: -32000,
+      message: 'Hex string contains invalid characters.'
+    };
+  }
   const bytes = [];
   for (let i = 0; i < strippedHex.length; i += 2) {
     bytes.push(parseInt(strippedHex.substr(i, 2), 16));
